@@ -1,0 +1,65 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Product name"
+    },
+    "name_ar": {
+      "type": "string",
+      "description": "Product name in Arabic"
+    },
+    "description": {
+      "type": "string",
+      "description": "Product description"
+    },
+    "price": {
+      "type": "number",
+      "description": "Product price in MAD"
+    },
+    "original_price": {
+      "type": "number",
+      "description": "Original price before discount"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "men",
+        "women",
+        "unisex"
+      ],
+      "description": "Product category"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Product image URL"
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this a featured product"
+    },
+    "in_stock": {
+      "type": "boolean",
+      "default": true,
+      "description": "Product availability"
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Fragrance notes"
+    },
+    "size": {
+      "type": "string",
+      "description": "Bottle size (e.g., 100ml)"
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "category"
+  ]
+}
