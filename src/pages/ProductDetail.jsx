@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { ShoppingBag, Heart, Share2, ChevronLeft, Minus, Plus, Truck, Shield, RefreshCw } from 'lucide-react';
+import { ShoppingBag, Heart, Share2, ChevronLeft, Minus, Plus, Truck, Shield, RefreshCw, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCart } from '@/context/CartContext';
 
 import Footer from '@/components/shared/Footer';
 import WhatsAppButton from '@/components/shared/WhatsAppButton';
@@ -14,6 +15,7 @@ import ProductCard from '@/components/shared/ProductCard';
 export default function ProductDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const productId = urlParams.get('id');
+  const { addItem } = useCart();
 
   const [quantity, setQuantity] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -218,15 +220,28 @@ export default function ProductDetail() {
                   </button>
                 </div>
 
-                {/* Buy Now Button */}
-                <button
-                  onClick={handleBuyNow}
-                  disabled={!product.in_stock}
-                  className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-300 text-white py-4 px-8 rounded-xl font-semibold flex items-center justify-center gap-3 transition-colors"
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  {product.in_stock ? 'Buy Now' : 'Out of Stock'}
-                </button>
+                {/* Buttons */}
+                <div className="flex-1 flex gap-4">
+                  <button
+                    onClick={() => {
+                        for(let i=0; i<quantity; i++) addItem(product);
+                    }}
+                    disabled={!product.in_stock}
+                    className="flex-1 bg-white border-2 border-black hover:bg-gray-50 disabled:bg-gray-100 disabled:border-gray-300 text-black py-4 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    Add to Cart
+                  </button>
+
+                  <button
+                    onClick={handleBuyNow}
+                    disabled={!product.in_stock}
+                    className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-300 text-white py-4 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    Buy Now
+                  </button>
+                </div>
               </div>
 
               {/* Features */}

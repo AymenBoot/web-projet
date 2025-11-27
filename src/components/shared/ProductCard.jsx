@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ShoppingBag, Eye } from 'lucide-react';
+import { ShoppingBag, Eye, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCart } from '@/context/CartContext';
 
 export default function ProductCard({ product, onBuyNow, index = 0 }) {
+  const { addItem } = useCart();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -23,16 +26,23 @@ export default function ProductCard({ product, onBuyNow, index = 0 }) {
         
         {/* Quick Actions */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3">
+          <button
+            onClick={() => addItem(product)}
+            className="bg-white hover:bg-gray-100 text-black p-4 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
+            title="Add to Cart"
+          >
+            <ShoppingCart className="w-5 h-5" />
+          </button>
           <button 
             onClick={() => onBuyNow(product)}
-            className="bg-amber-500 hover:bg-amber-600 text-black p-4 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
+            className="bg-amber-500 hover:bg-amber-600 text-black p-4 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-75"
             title="Buy Now"
           >
             <ShoppingBag className="w-5 h-5" />
           </button>
           <Link 
             to={createPageUrl(`ProductDetail?id=${product.id}`)}
-            className="bg-white hover:bg-gray-100 text-black p-4 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-75"
+            className="bg-white hover:bg-gray-100 text-black p-4 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-100"
             title="View Details"
           >
             <Eye className="w-5 h-5" />

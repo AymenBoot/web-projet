@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { X, Minus, Plus, ShoppingBag, MessageCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { useCart } from '@/context/CartContext';
 
-export default function CheckoutModal({ product, isOpen, onClose }) {
+export default function CheckoutModal({ product, isOpen, onClose, isCartCheckout = false }) {
+  const { cart, clearCart, totalPrice: cartTotal } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
@@ -15,9 +17,13 @@ export default function CheckoutModal({ product, isOpen, onClose }) {
     notes: ''
   });
 
-  if (!product) return null;
+  // Determine what we are buying (single product or whole cart)
+  const isSingleProduct = !!product;
+  const items = isSingleProduct ? [{ ...product, quantity }] : cart;
+  const total = isSingleProduct ? (product?.price * quantity) : cartTotal;
 
-  const totalPrice = product.price * quantity;
+  if (!isOpen) return null;
+  if (!isSingleProduct && cart.length === 0 && !orderComplete) return null;
 
   const handleInputChange = (e) => {
     setFormData({
@@ -27,12 +33,15 @@ export default function CheckoutModal({ product, isOpen, onClose }) {
   };
 
   const generateWhatsAppLink = () => {
+    const itemsList = items.map(item =>
+      `📦 ${item.name} (x${item.quantity}) - ${item.price * item.quantity} MAD`
+    ).join('\n');
+
     const message = `🛒 *New Order*
 ━━━━━━━━━━━━━━
-📦 *Product:* ${product.name}
-💰 *Price:* ${product.price} MAD
-📊 *Quantity:* ${quantity}
-💵 *Total:* ${totalPrice} MAD
+${itemsList}
+━━━━━━━━━━━━━━
+💰 *Total Amount:* ${total} MAD
 ━━━━━━━━━━━━━━
 👤 *Name:* ${formData.customer_name}
 📱 *Phone:* ${formData.phone}
@@ -52,12 +61,14 @@ ${formData.notes ? `📝 *Notes:* ${formData.notes}` : ''}
     // Save order to database
     await base44.entities.Order.create({
       ...formData,
-      product_id: product.id,
-      product_name: product.name,
-      quantity: quantity,
-      total_price: totalPrice,
+      items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price })),
+      total_price: total,
       status: 'pending'
     });
+
+    if (isCartCheckout) {
+      clearCart();
+    }
 
     setIsSubmitting(false);
     setOrderComplete(true);
@@ -142,45 +153,64 @@ ${formData.notes ? `📝 *Notes:* ${formData.notes}` : ''}
               </div>
             ) : (
               <>
-                {/* Product Summary */}
-                <div className="p-6 border-b border-gray-100">
-                  <div className="flex gap-4">
-                    <img 
-                      src={product.image_url || "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=200&h=200&fit=crop"}
-                      alt={product.name}
-                      className="w-24 h-24 object-cover rounded-xl"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-black">{product.name}</h3>
-                      <p className="text-gray-500 text-sm">{product.size || '100ml'}</p>
-                      <p className="text-amber-600 font-bold mt-2">{product.price} MAD</p>
-                    </div>
-                  </div>
+                {/* Order Summary */}
+                <div className="p-6 border-b border-gray-100 bg-gray-50">
+                  <h3 className="font-semibold text-gray-900 mb-4">Order Summary</h3>
 
-                  {/* Quantity Selector */}
-                  <div className="flex items-center justify-between mt-6 p-4 bg-gray-50 rounded-xl">
-                    <span className="text-gray-700 font-medium">Quantity</span>
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-amber-500 transition-colors"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span className="text-xl font-semibold w-8 text-center">{quantity}</span>
-                      <button 
-                        onClick={() => setQuantity(quantity + 1)}
-                        className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-amber-500 transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
+                  {isSingleProduct ? (
+                    /* Single Product View */
+                    <div>
+                      <div className="flex gap-4">
+                        <img
+                          src={product.image_url || "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=200&h=200&fit=crop"}
+                          alt={product.name}
+                          className="w-20 h-20 object-cover rounded-xl"
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-medium text-black">{product.name}</h3>
+                          <p className="text-gray-500 text-sm">{product.size || '100ml'}</p>
+                          <div className="flex items-center justify-between mt-2">
+                             <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                  className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-amber-500"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="text-sm font-semibold">{quantity}</span>
+                                <button
+                                  onClick={() => setQuantity(quantity + 1)}
+                                  className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:border-amber-500"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                             </div>
+                             <span className="font-bold text-amber-600">{product.price * quantity} MAD</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    /* Cart Summary View */
+                    <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
+                      {cart.map((item) => (
+                        <div key={item.id} className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-gray-200 text-gray-600 text-xs font-bold px-1.5 py-0.5 rounded">
+                              {item.quantity}x
+                            </span>
+                            <span className="text-gray-700 truncate max-w-[180px]">{item.name}</span>
+                          </div>
+                          <span className="font-medium text-gray-900">{item.price * item.quantity} MAD</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Total */}
-                  <div className="flex items-center justify-between mt-4 text-lg">
-                    <span className="text-gray-700">Total</span>
-                    <span className="font-bold text-black">{totalPrice} MAD</span>
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 text-lg">
+                    <span className="text-gray-700">Total Amount</span>
+                    <span className="font-bold text-black">{total} MAD</span>
                   </div>
                 </div>
 
