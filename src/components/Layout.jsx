@@ -3,10 +3,15 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Menu, X, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCart } from '@/context/CartContext';
+import CartDrawer from './CartDrawer';
+import CheckoutModal from '@/components/shared/CheckoutModal';
 
 export default function Layout({ children, currentPageName }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const { toggleCart, totalItems } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,22 +88,47 @@ export default function Layout({ children, currentPageName }) {
 
             {/* Desktop CTA */}
             <div className="hidden lg:flex items-center gap-4">
+              <button
+                onClick={toggleCart}
+                className="relative p-2 text-white hover:text-amber-500 transition-colors"
+              >
+                <ShoppingBag className="w-6 h-6" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+
               <Link 
                 to={createPageUrl('Shop')}
                 className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-black px-6 py-2.5 text-sm font-semibold tracking-wider uppercase transition-colors"
               >
-                <ShoppingBag className="w-4 h-4" />
                 Shop Now
               </Link>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden w-10 h-10 flex items-center justify-center text-white"
-            >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+            {/* Mobile Actions */}
+            <div className="lg:hidden flex items-center gap-2">
+              <button
+                onClick={toggleCart}
+                className="relative w-10 h-10 flex items-center justify-center text-white hover:text-amber-500 transition-colors"
+              >
+                <ShoppingBag className="w-6 h-6" />
+                {totalItems > 0 && (
+                  <span className="absolute top-1 right-1 bg-amber-500 text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="w-10 h-10 flex items-center justify-center text-white"
+              >
+                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -144,6 +174,14 @@ export default function Layout({ children, currentPageName }) {
       <main className={isHomePage ? '' : 'pt-20'}>
         {children}
       </main>
+
+      <CartDrawer onCheckout={() => setIsCheckoutOpen(true)} />
+
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        isCartCheckout={true}
+      />
     </div>
   );
 }
